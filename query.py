@@ -15,7 +15,7 @@ script. Index files must reside in the same Current Working Directory
 import sys
 import os
 import logging
-from indexer.indexer import Indexer
+from query_engine.engine import QueryEngine
 
 # Constants
 NUM_INDEXER_THREADS = 2
@@ -28,11 +28,12 @@ def usage():
 if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
-    
-    QueryEngine qe = QueryEngine()
+
+    qe = QueryEngine()
     logging.info("Loading index file")
 
     
-    sys.stdout.write('Query: ')
-    value = raw_input()
-
+    while (True):
+        sys.stdout.write('Query: ')
+        value = raw_input()
+        qe.query(value)

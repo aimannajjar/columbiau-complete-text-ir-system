@@ -102,6 +102,7 @@ class Document(HTMLParser.HTMLParser):
         self.biblio = None
         self.text = None
         self.title = None
+        self.length = 0
         self._path_to_file = None
 
         # variables used during parsing
@@ -113,19 +114,21 @@ class Document(HTMLParser.HTMLParser):
         self.currentTag = tag
 
     def handle_endtag(self, tag):
+        data = ''.join(self.terms_list).strip()
         if tag.lower() == "docno":
-            self.document_numer = ''.join(self.terms_list).strip()
+            self.document_number = data
         elif tag.lower() == "author":
-            self.author = ''.join(self.terms_list).strip()
+            self.author = data
         elif tag.lower() == "biblio":
-            self.biblio = ''.join(self.terms_list).strip()
+            self.biblio = data
         elif tag.lower() == "text":
-            self.text = ''.join(self.terms_list).strip()
+            self.text = data
         elif tag.lower() == "title":
-            self.title = ''.join(self.terms_list).strip()     
+            self.title = data
         elif tag.lower() != "doc":
             logging.warning("Unexpected tag %s" % tag)
 
+        self.length = self.length + len(data)
         self.currentTag = ""
         self.terms_list = []
 

@@ -10,7 +10,6 @@ indexing documents and will raise IO errors if it fails in doing so.
 import logging
 import threading
 import re
-import pickle
 import math
 import Queue
 import cPickle
@@ -52,7 +51,7 @@ class Indexer():
     WEIGHT_FACTOR[Zones.BIBLIO] = 1.5
     WEIGHT_FACTOR[Zones.TEXT] = 1.0
 
-    def __init__(self, num_threads, enhanced_score=False):
+    def __init__(self, num_threads, index_name="ifile", enhanced_score=False):
         """
         Initialize and sart background threads.
             enhanced_score -- if set, give higher weights to metadata tokens
@@ -63,6 +62,7 @@ class Indexer():
         self._ifile_open = False
         self._corpus = []
         self._vector_space = []
+        self.index_name = index_name
 
         for i in range(num_threads):
             worker = threading.Thread(target=self._pass1,
@@ -118,7 +118,7 @@ class Indexer():
         """Build the inverted file"""
 
         # open index file on disk
-        f = open("./index.if", 'w')
+        f = open("%s.postings" % self.index_name, 'w')
         
         # Write metadata
         # len:total tokens|len:total documents        
@@ -134,7 +134,7 @@ class Indexer():
                                          # postings lists in disk
         for term in sorted(self._ifile):
             liststr = ""
-            for doc_id in self._ifile[term][2]:
+            for doc_id in sorted(self._ifile[term][2]):
                 liststr = liststr + str(doc_id) + ","
             liststr = liststr.rstrip(",")
             # write postings list for the term in this format:
@@ -146,16 +146,15 @@ class Indexer():
         f.close()
 
         # Now we would like to 'pickle' the vocabulary but excluding
-        # the postings list and store it in ifile.pickle
+        # the postings list and store it in filename.dict
         # Also, we change the third dimension value to postings list pointer
-        # on disk file ./index.if
+        # on disk file filename.postings
         for term in sorted(self._ifile):
             self._ifile[term][1] = math.log( float(len(self._corpus)) / 
                                              float(len(self._ifile[term][2]))) # idf
             self._ifile[term][2] = postings_list_pointers[term]
 
-        f = open("ifile.pickle", "w")
-        # pickle.dump(self._ifile, f, pickle.HIGHEST_PROTOCOL)
+        f = open("%s.dict" % self.index_name, "w")
         f.write(zlib.compress(cPickle.dumps(self._ifile,cPickle.HIGHEST_PROTOCOL),9))
         f.close()
 
@@ -165,14 +164,16 @@ class Indexer():
         self._vector_space = [None] * len(self._corpus)
 
         # Dispatch documents to second pass
-        # for document in self._corpus:
-            # self._pass2_queue.put(document)
+        for document in self._corpus:
+            self._pass2_queue.put(document)
 
         # Wait for vector space to be built
-        # self._pass2_queue.join()
+        self._pass2_queue.join()
 
-        # Dump the file
-        # logging.info("Saving index to disk")
+        # Dump the vector space
+        f = open("%s.vs" % self.index_name, "w")
+        f.write(zlib.compress(cPickle.dumps(self._vector_space,cPickle.HIGHEST_PROTOCOL),9))
+        f.close()
         
         
 
@@ -196,7 +197,7 @@ class Indexer():
 
             # Assign an ID to the document
             with self._ifile_lock:
-                document.document_id = len(self._corpus)
+                document.document_id = int(document.document_number)
                 self._corpus.append(document)
 
             # Tokenize
@@ -256,24 +257,24 @@ class Indexer():
             tokens_biblio = re.compile(Indexer.DELIMITERS).split(document.biblio)
             
             # Initialize vector space for this document
-            self._vector_space[document.document_id] = [0.0] * len(self._ifile)
+            self._vector_space[document.document_id-1] = [0.0] * len(self._ifile)
 
             for token in tokens:                
-                self._pass2_process_token(document.document_id, Zones.TEXT, token)
+                self._pass2_process_token(document, Zones.TEXT, token)
 
             for token in tokens_title:                
-                self._pass2_process_token(document.document_id, Zones.TITLE, token)                
+                self._pass2_process_token(document, Zones.TITLE, token)                
 
             for token in tokens_author:
-                self._pass2_process_token(document.document_id, Zones.AUTHOR, token)                                
+                self._pass2_process_token(document, Zones.AUTHOR, token)                                
 
             for token in tokens_biblio:
-                self._pass2_process_token(document.document_id, Zones.BIBLIO, token)                   
+                self._pass2_process_token(document, Zones.BIBLIO, token)                   
 
             queue.task_done()
 
 
-    def _pass2_process_token(self, doc_id, zone, token):
+    def _pass2_process_token(self, document, zone, token):
         # Vector space structure
         # self._vector_space[d][t] = frequency of term t in document d
         # Ensure token is in lowercase
@@ -282,6 +283,7 @@ class Indexer():
         if token not in self._ifile:
             return
         t = self._ifile[token][0]
-        self._vector_space[doc_id][t] = self._vector_space[doc_id][t] + 1.0
+        self._vector_space[document.document_id-1][t] = \
+            (1.0 / document.length) + self._vector_space[document.document_id-1][t]
 
 
