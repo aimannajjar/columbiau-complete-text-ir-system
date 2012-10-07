@@ -9,6 +9,7 @@ which is a class representation of the corpus.
 """
 import HTMLParser
 import logging
+import indexer.constants 
 
 class Zones:
     """Defines constants for index zones"""
@@ -124,11 +125,36 @@ class Document(HTMLParser.HTMLParser):
         self.terms_list = []
         self.currentTag = ""
 
+    def text_snippet(self, start, length):
+        """
+        Returns a snippet from pos start to end without counting skip words
+        """
+        start_found = False
+        new_start = 0
+        new_end = 0
+        pos = start
+        for term in self.text.split(" "):
+            if term not in indexer.constants.DO_NOT_INDEX:
+                pos = pos - 1
+
+            if not start_found:
+                new_start = new_start + 1
+            else: 
+                new_end = new_end + 1
+
+            if not start_found and pos <= 0:
+                pos = length
+                start_found = True
+            elif pos <= 0:
+                break
+        new_end = new_start + new_end
+        return " ".join(self.text.split(" ")[new_start:new_end]) 
+
     def handle_starttag(self, tag, attrs):
         self.currentTag = tag
 
     def handle_endtag(self, tag):
-        data = ''.join(self.terms_list).strip()
+        data = ' '.join(self.terms_list).strip()
         zone = Zones.TEXT
         if tag.lower() == "docno":
             self.document_number = data
@@ -152,6 +178,6 @@ class Document(HTMLParser.HTMLParser):
         self.terms_list = []
 
     def handle_data(self, d):
-        self.terms_list.append(d.replace("\n", ""))
+        self.terms_list.append(d.replace("\n", " "))
 
 

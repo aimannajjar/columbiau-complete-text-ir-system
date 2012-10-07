@@ -242,7 +242,7 @@ class QueryEngine():
                             if proximity < min_proximity[doc]:
                                 min_proximity[doc] = proximity
                                 # This seems like a good snippet position start
-                                snippet_positions[doc] = pos_2 - 10
+                                snippet_positions[doc] = pos_2
 
                     for pos in self._vector_space[doc][term_index][1][Zones.TITLE]:
                         for pos_2 in self._vector_space[doc][last_term_idx][1][Zones.TITLE]:
@@ -255,7 +255,7 @@ class QueryEngine():
                         # Doesn't look like it, let's use this one
                         if len(self._vector_space[doc][term_index][1][Zones.TEXT]) > 0:                    
                             snippet_positions[doc] = \
-                                self._vector_space[doc][term_index][1][Zones.TEXT][0] - 15
+                                self._vector_space[doc][term_index][1][Zones.TEXT][0]
 
                     # If phrase search and proximity is not 1, exclude this doc
                     if phrase_search and min_proximity[doc] > 1:
@@ -264,15 +264,15 @@ class QueryEngine():
                     # This is the first term iteration, we assume our snipper starts here
                     if len(self._vector_space[doc][term_index][1][Zones.TEXT]) > 0:                    
                         snippet_positions[doc] = \
-                            self._vector_space[doc][term_index][1][Zones.TEXT][0] - 15
+                            self._vector_space[doc][term_index][1][Zones.TEXT][0]
                     else:
                         snippet_positions[doc] = sys.maxint
 
                 _tmp_scores[doc] = _tmp_scores[doc] + term_score
                                    
-            # give boost to documents who had small proximities in this round
-            if doc in min_proximity:
-                _tmp_scores[doc] = _tmp_scores[doc] * (1.0 / min_proximity[doc])
+                # give boost to documents who had small proximities in this round
+                if doc in min_proximity:
+                    _tmp_scores[doc] = _tmp_scores[doc] * (1.0 / min_proximity[doc])
 
             last_term_idx = term_index
             i = i + 1
