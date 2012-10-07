@@ -14,14 +14,10 @@ import math
 import Queue
 import cPickle
 import zlib
-from document import Document
-
-class Zones:
-    """Defines constants for index zones"""
-    AUTHOR = 0
-    TITLE = 1
-    BIBLIO = 2
-    TEXT = 3
+import constants
+from document.document import Document
+from document.PorterStemmer import PorterStemmer
+from document.document import Zones
 
 class Indexer():
     """
@@ -40,16 +36,8 @@ class Indexer():
                                     to be able to call index_document
         build_index() -- builds the index and save it to disk, close must
                          be called before attempting to build the index
-        DELIMITERS -- A regular expression used to tokenize documents
 
     """
-
-    DELIMITERS = '[\s.,=?!:@<>()\"-;\'&_\\{\\}\\|\\[\\]\\\\]+'    
-    WEIGHT_FACTOR = [0,0,0,0]
-    WEIGHT_FACTOR[Zones.AUTHOR] = 3.0    
-    WEIGHT_FACTOR[Zones.TITLE] = 2.0
-    WEIGHT_FACTOR[Zones.BIBLIO] = 1.5
-    WEIGHT_FACTOR[Zones.TEXT] = 1.0
 
     def __init__(self, num_threads, index_name="ifile", enhanced_score=False):
         """
@@ -134,8 +122,10 @@ class Indexer():
                                          # postings lists in disk
         for term in sorted(self._ifile):
             liststr = ""
+            last_doc_id = 0
             for doc_id in sorted(self._ifile[term][2]):
-                liststr = liststr + str(doc_id) + ","
+                liststr = liststr + str(int(doc_id) - last_doc_id) + ","
+                last_doc_id = doc_id
             liststr = liststr.rstrip(",")
             # write postings list for the term in this format:
             # len_of_list:list (csv)
@@ -149,19 +139,19 @@ class Indexer():
         # the postings list and store it in filename.dict
         # Also, we change the third dimension value to postings list pointer
         # on disk file filename.postings
+        i = 0
         for term in sorted(self._ifile):
-            self._ifile[term][1] = math.log( float(len(self._corpus)) / 
-                                             float(len(self._ifile[term][2]))) # idf
+            self._ifile[term][0] = i
+            self._ifile[term][1] = len(self._ifile[term][2]) # df
             self._ifile[term][2] = postings_list_pointers[term]
+            i = i + 1
 
         f = open("%s.dict" % self.index_name, "w")
         f.write(zlib.compress(cPickle.dumps(self._ifile,cPickle.HIGHEST_PROTOCOL),9))
         f.close()
 
-        logging.info("Index files created")
-
         # Initialize vector space
-        self._vector_space = [None] * len(self._corpus)
+        self._vector_space = [None] * (len(self._corpus) + 1)
 
         # Dispatch documents to second pass
         for document in self._corpus:
@@ -175,7 +165,11 @@ class Indexer():
         f.write(zlib.compress(cPickle.dumps(self._vector_space,cPickle.HIGHEST_PROTOCOL),9))
         f.close()
         
-        
+        # And finally dump corpus
+        f = open("%s.corpus" % self.index_name, "w")
+        f.write(zlib.compress(cPickle.dumps(self._corpus,cPickle.HIGHEST_PROTOCOL),9))
+        f.close()
+
 
     ## Private Methods ##
 
@@ -201,11 +195,11 @@ class Indexer():
                 self._corpus.append(document)
 
             # Tokenize
-            tokens = re.compile(Indexer.DELIMITERS).split(document.text)
-            tokens_title = re.compile(Indexer.DELIMITERS).split(document.title)
-            tokens_author = re.compile(Indexer.DELIMITERS).split(document.author)
-            tokens_biblio = re.compile(Indexer.DELIMITERS).split(document.biblio)
-            
+            tokens = re.compile(constants.DELIMITERS).split(document.text)
+            tokens_title = re.compile(constants.DELIMITERS).split(document.title)
+            tokens_author = re.compile(constants.DELIMITERS).split(document.author)
+            tokens_biblio = re.compile(constants.DELIMITERS).split(document.biblio)
+
 
             # Insert tokens in inverted files
             for token in tokens:                
@@ -224,7 +218,16 @@ class Indexer():
 
     def _pass1_process_token(self, doc_id, token):
         # Inverted file structure:
-        # self._ifile[token] = [idf, list of doc ids]
+        # self._ifile[token] = [id, df, postings_list]
+
+        # Let's make sure the token is not in our "do not index"
+        if token in constants.DO_NOT_INDEX:
+            return
+        p = PorterStemmer()
+        # First, let's stem the token
+        token = token.lower()
+        token = p.stem(token.lower(), 0,len(token)-1)
+
         with self._ifile_lock:                    
             if self._ifile is None:
                 logging.error("INDEXER-P1-THREAD-%d: Attempting to index"
@@ -232,9 +235,8 @@ class Indexer():
                               % thread_no)
                 raise Exception("Index file has been closed")
 
-            token = token.lower()
             if token not in self._ifile:
-                self._ifile[token] = [0,0.0,set()]
+                self._ifile[token] = [0,0,set()]
             self._ifile[token][2].add(doc_id)
 
 
@@ -251,39 +253,71 @@ class Indexer():
 
 
             # Process document tokens
-            tokens = re.compile(Indexer.DELIMITERS).split(document.text)
-            tokens_title = re.compile(Indexer.DELIMITERS).split(document.title)
-            tokens_author = re.compile(Indexer.DELIMITERS).split(document.author)
-            tokens_biblio = re.compile(Indexer.DELIMITERS).split(document.biblio)
+            tokens = re.compile(constants.DELIMITERS).split(document.text)
+            tokens_title = re.compile(constants.DELIMITERS).split(document.title)
+            tokens_author = re.compile(constants.DELIMITERS).split(document.author)
+            tokens_biblio = re.compile(constants.DELIMITERS).split(document.biblio)
             
             # Initialize vector space for this document
-            self._vector_space[document.document_id-1] = [0.0] * len(self._ifile)
+            self._vector_space[document.document_id] = dict()
+            
 
+            curr_pos = 1
             for token in tokens:                
-                self._pass2_process_token(document, Zones.TEXT, token)
+                self._pass2_process_token(document, curr_pos, Zones.TEXT,
+                                          token)
+                if token.lower() not in constants.DO_NOT_INDEX: 
+                    curr_pos = curr_pos + 1                
 
+            curr_pos = 1
             for token in tokens_title:                
-                self._pass2_process_token(document, Zones.TITLE, token)                
+                self._pass2_process_token(document, curr_pos, Zones.TITLE, 
+                                          token)                
+                if token.lower() not in constants.DO_NOT_INDEX: 
+                    curr_pos = curr_pos + 1                
 
+            curr_pos = 1
             for token in tokens_author:
-                self._pass2_process_token(document, Zones.AUTHOR, token)                                
+                self._pass2_process_token(document, curr_pos, Zones.AUTHOR,
+                                          token)                                
+                if token.lower() not in constants.DO_NOT_INDEX: 
+                    curr_pos = curr_pos + 1                
 
+            curr_pos = 1
             for token in tokens_biblio:
-                self._pass2_process_token(document, Zones.BIBLIO, token)                   
+                self._pass2_process_token(document, curr_pos, Zones.BIBLIO,
+                                          token)  
+                if token.lower() not in constants.DO_NOT_INDEX: 
+                    curr_pos = curr_pos + 1                
 
             queue.task_done()
 
 
-    def _pass2_process_token(self, document, zone, token):
+    def _pass2_process_token(self, document, position, zone, token):
         # Vector space structure
-        # self._vector_space[d][t] = frequency of term t in document d
-        # Ensure token is in lowercase
+        # self._vector_space[d][t][0] = frequency of term t in document d
+        # self._vector_space[d][t][1] = positions of term t in document d
+        # positions are in this format: ZoneNumber | position
+        # Ensure token is in lowercase and eligible for index
+        if token in constants.DO_NOT_INDEX:
+            return
+
+        p = PorterStemmer()
+        # First, let's stem the token
         token = token.lower()
+        token = p.stem(token.lower(), 0,len(token)-1)
+
         # Find term's index in vector space
         if token not in self._ifile:
             return
         t = self._ifile[token][0]
-        self._vector_space[document.document_id-1][t] = \
-            (1.0 / document.length) + self._vector_space[document.document_id-1][t]
+        if not t in self._vector_space[document.document_id]:
+            self._vector_space[document.document_id][t] = [0.0, [[],[],[],[]]]
+
+        self._vector_space[document.document_id][t][0] = \
+            (Zones.WEIGHTS[zone] / document.length) \
+            + self._vector_space[document.document_id][t][0]
+
+        self._vector_space[document.document_id][t][1][zone].append(position)
 
 
