@@ -39,8 +39,18 @@ if __name__ == "__main__":
     while (True):
         sys.stdout.write('Query: ')
         value = raw_input()
-        results = qe.query(Query.from_string(value))
+        query_obj = Query.from_string(value)
+        results = qe.query(query_obj)
         i = 0
+
+        if query_obj.cmd == "similar":
+            print 'Words similar to %s in context:' % query_obj.groups[0]
+            sys.stdout.write(' ')
+            sys.stdout.write(", ".join(results))
+            print ' '
+            continue
+
+
         for doc in results:
             doc_id = doc[0]
             pos = doc[2] - 3
