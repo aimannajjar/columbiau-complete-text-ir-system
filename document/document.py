@@ -33,6 +33,10 @@ class Document(HTMLParser.HTMLParser):
                         set by a client of this object
         document_number -- the numerical value found in <DOCNO> tag
         author, biblio, text -- document metadata and content
+        weighted_length -- total terms in document, terms from different
+                            zones contribute differently to this weighted 
+                            length (e.g. a single term in the title is
+                                worth two terms)
 
     There are two ways to create a Document object:
         from_file(path_to_xml_file) -- Creates a document by passing
@@ -117,13 +121,15 @@ class Document(HTMLParser.HTMLParser):
         self.author = None
         self.biblio = None
         self.text = None
+        self.original_text = None
         self.title = None
-        self.length = 0
+        self.weighted_length = 0 
         self._path_to_file = None
 
         # variables used during parsing
         self.reset()
-        self.terms_list = []
+        self.data = ""
+        self.original_data = ""
         self.currentTag = ""
 
     def colored_author(self, terms):
@@ -141,8 +147,8 @@ class Document(HTMLParser.HTMLParser):
         title = self.title
         for term in terms:
             title = re.sub('(?i)([\s.,=?!:@<>()\"-;\'&_\\{\\}\\|\\[\\]\\\\]' + \
-                            re.escape(term) + \
-                           "[^\s.,=?!:@<>()\"-;\'&_\\{\\}\\|\\[\\]\\\\]*)",
+                             re.escape(term) + \
+                             "[^\s.,=?!:@<>()\"-;\'&_\\{\\}\\|\\[\\]\\\\]*)",
                              '\033[94m\\1\033[0m', title) 
 
         return title
@@ -191,30 +197,33 @@ class Document(HTMLParser.HTMLParser):
         self.currentTag = tag
 
     def handle_endtag(self, tag):
-        data = ' '.join(self.terms_list).strip()
         zone = Zones.TEXT
         if tag.lower() == "docno":
-            self.document_number = data
+            self.document_number = self.data
         elif tag.lower() == "author":
-            self.author = data
+            self.author = self.data
             zone = Zones.AUTHOR
         elif tag.lower() == "biblio":
-            self.biblio = data
+            self.biblio = self.data
             zone = Zones.BIBLIO
         elif tag.lower() == "text":
-            self.text = data
+            self.text = self.data
+            self.original_text = self.original_data
             zone = Zones.TEXT
         elif tag.lower() == "title":
-            self.title = data
+            self.title = self.data
             zone = Zones.TITLE
         elif tag.lower() != "doc":
             logging.warning("Unexpected tag %s" % tag)
 
-        self.length = self.length + (len(data) * Zones.WEIGHTS[zone])
+        self.weighted_length = self.weighted_length + \
+                                (len(self.data) * Zones.WEIGHTS[zone])
         self.currentTag = ""
-        self.terms_list = []
+        self.data = ""
+        self.original_data = ""
 
     def handle_data(self, d):
-        self.terms_list.append(d.replace("\n", " "))
+        self.data = d.replace("\n", " ")
+        self.original_data = d
 
 

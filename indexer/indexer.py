@@ -295,28 +295,24 @@ class Indexer():
             for token in tokens:                
                 self._pass2_process_token(document, curr_pos, Zones.TEXT,
                                           token)
-                # if token.lower() not in constants.DO_NOT_INDEX and len(token) > 1:
                 curr_pos = curr_pos + 1                
 
             curr_pos = 1
             for token in tokens_title:                
                 self._pass2_process_token(document, curr_pos, Zones.TITLE, 
                                           token)                
-                # if token.lower() not in constants.DO_NOT_INDEX and len(token) > 1:
                 curr_pos = curr_pos + 1                
 
             curr_pos = 1
             for token in tokens_author:
                 self._pass2_process_token(document, curr_pos, Zones.AUTHOR,
                                           token)                                
-                # if token.lower() not in constants.DO_NOT_INDEX and len(token) > 1:
                 curr_pos = curr_pos + 1                
 
             curr_pos = 1
             for token in tokens_biblio:
                 self._pass2_process_token(document, curr_pos, Zones.BIBLIO,
                                           token)  
-                # if token.lower() not in constants.DO_NOT_INDEX and len(token) > 1:
                 curr_pos = curr_pos + 1                
 
             queue.task_done()
@@ -345,7 +341,7 @@ class Indexer():
             self._vector_space[document.document_id][t] = [0.0, [[],[],[],[]],0]
 
         self._vector_space[document.document_id][t][0] = \
-            (Zones.WEIGHTS[zone] / document.length) \
+            (Zones.WEIGHTS[zone] / document.weighted_length) \
             + self._vector_space[document.document_id][t][0]
 
         self._vector_space[document.document_id][t][1][zone].append(position)

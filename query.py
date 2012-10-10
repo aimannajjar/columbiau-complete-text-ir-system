@@ -72,9 +72,34 @@ if __name__ == "__main__":
             print 'Total Frequency of %s in corpus: %d ' % \
                     (query_obj.groups[0], results)
 
-        elif query_obj.cmd == "doc":
-            if query_obj.groups[0] in qe.corpus:
-                print 
+        elif query_obj.cmd == "doc" or query_obj.cmd == "title":
+            doc_id = 0
+            if len(query_obj.raw_terms) < 1:
+                print 'Please specify document ID'
+                print ''
+            try:
+                doc_id = int(query_obj.raw_terms[0])
+                if doc_id in qe.corpus:
+                    print ''
+
+                    if query_obj.cmd == "doc":
+                        print '%-9s: %-10s' % ("DocNo", doc_id)                        
+                        print '%-9s: %10s' % ("Title", qe.corpus[doc_id].title)
+                        print '%-9s: %10s' % ("Author", qe.corpus[doc_id].author)
+                        print ''
+                        print qe.corpus[doc_id].original_text
+                    else:
+                        print "Title: %s " % qe.corpus[doc_id].title
+
+                else:
+                    print 'There is no document with specified ID'
+
+            except Exception, e:
+                print 'Invalid document ID'
+
+        elif query_obj.cmd == "tf":
+            print 'Term Frquency in Document %s: %d' % \
+                (query_obj.raw_terms[0], results)
         
         else:            
             for doc in results:

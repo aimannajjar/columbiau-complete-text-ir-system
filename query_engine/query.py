@@ -66,7 +66,8 @@ class Query():
         """Parse specified query and return query object"""
         queryObj = Query()
         queryObj.phrase_search = False        
-        query = query.strip()
+        query = query.strip().lower()
+
 
         # Determine if it's a "command" query
         if (query.startswith("similar ") or query.startswith("df ") or \
@@ -76,6 +77,16 @@ class Query():
                 queryObj.cmd = query.split(" ")[0].strip()
                 query = query.replace(queryObj.cmd + " ", "", 1) # remove cmd
                                                               # from query str
+
+        # For "tf " queries, extract first parameter early on, so we
+        # don't have to hack later when we process the query terms
+        if queryObj.cmd == "tf":
+            if len(query.split(" ")) < 2: 
+                # This is not a valid "tf " query
+                queryObj.cmd = None
+            else:
+                queryObj.raw_terms.append(query.split(" ")[0])
+                query = " ".join(query.split(" ")[1:])
 
         # Clean up and determine if phrase search        
         if query.replace("!", "").startswith('"'):
@@ -115,13 +126,21 @@ class Query():
                     gid = gid + 1
                 last_grp = group
 
-        # Stem (except for similar queries) & remove inelgible tokens
+        # Stem tokens in groups (except for "similar" queries) 
+        # and remove inelgible tokens
         for group in _groups:
-            _query_terms = re.compile(indexer.constants.DELIMITERS).split(group)
+
+            _query_terms = []
+            if queryObj.cmd == "doc" or queryObj.cmd == "title":
+                _query_terms = group.split(" ")
+
+            else:
+                _query_terms = re.compile(indexer.constants.DELIMITERS).split(group)
+
             query_terms = []
             for term in _query_terms:
                 term = term.lower()
-                
+
                 if term not in indexer.constants.DO_NOT_INDEX:
                     queryObj.raw_terms.append(term)
                     # Stem

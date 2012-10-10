@@ -11,7 +11,9 @@ import json
 import math
 import logging
 import sys
+import re
 import cPickle
+import indexer.constants
 from collections import defaultdict
 from document.document import Zones
 
@@ -129,6 +131,8 @@ class QueryEngine():
         elif query.cmd == "freq":
             # For non-phrase queries, freq can be obtained easily from 
             # the vector space
+            # However, for phrase queries, freq is length of snippets array
+            # returned by _compute_group_scores (see farther below)            
             if not query.phrase_search:
                 if query.groups[0] in self._ifile:
                     term_index = self._ifile[query.groups[0]][0]
@@ -144,11 +148,30 @@ class QueryEngine():
                     return total_freq
 
                 else:
-                    return 0 
+                    return 0                     
 
-            # For phrase queries, freq is length of snippets array
-            # returned by _compute_group_scores (see below)
+        elif query.cmd == "tf":
+            # For non-phrase queries, freq can be obtained easily from 
+            # the vector space
+            # However, for phrase queries, tf is length of snippets array
+            # returned by _compute_group_scores (see farther below)      
+            if not query.phrase_search:
+                if query.groups[0] in self._ifile:
+                    term_index = self._ifile[query.groups[0]][0]
 
+                    try:
+                        doc_id = int(query.raw_terms[0])
+                        if doc_id > 0 and doc_id <= len(self._vector_space) and \
+                           term_index in self._vector_space[doc_id]:
+                            return self._vector_space[doc_id][term_index][2]
+                        else:
+                            return 0
+                    except Exception, e:
+                        return 0
+
+                else:
+                    return 0
+                    
 
 
         # ----------------------------------------
@@ -160,6 +183,7 @@ class QueryEngine():
         gid = 0
         scores = [None] * len(query.groups)
         snippets = [None] * len(query.groups)
+
 
         for group in query.groups:
             query_terms = group.split(" ")
@@ -221,7 +245,7 @@ class QueryEngine():
         for doc in sorted(final_scores, key=lambda d: final_scores[d], reverse=True):
             pos = 0
             if doc in final_snippets_positions:
-                # we select the first snippet:
+                # we select the first occurance for the snippet :
                 pos = min(final_snippets_positions[doc])                                                       
 
             if pos < 0 or pos == sys.maxint: 
@@ -246,8 +270,24 @@ class QueryEngine():
         # we can just return the number of snippets that contain the
         # phrase
         if query.cmd == "freq":
-            return len(snippets[0]) 
-        
+            total_freq = 0
+            for doc in sorted(final_scores, key=lambda d: final_scores[d], reverse=True):
+                total_freq += self.phrase_frequency_in_doc(doc, query.groups[0])
+            return total_freq
+
+        # - If this is a "tf" query for a phrase,
+        # we count the phrases directly, this should not be very
+        # expensive operation since we are counting the occurances
+        # in one specific document, although it could become inefficient
+        # for very large documents
+        if query.cmd == "tf":
+            doc_id = 0
+            try:
+                doc_id = int(query.raw_terms[0])
+            except Exception, e:
+                return 0
+
+            return self.phrase_frequency_in_doc(doc_id, query.groups[0])        
 
         if len(final_set) <= 0:
             return []
@@ -324,8 +364,24 @@ class QueryEngine():
         return sorted(scores, key=scores.get)[:n]
 
 
+    def phrase_frequency_in_doc(self, doc_id, phrase):
+        """Compute the total frequency of a phrase in a specific index"""
+        if doc_id > 0 and doc_id < len(self.corpus):
+            regex = ""
+            for term in re.compile(indexer.constants.DELIMITERS).split(phrase):                
+                regex = regex + re.escape(term) + indexer.constants.DELIMITERS
+
+            return len(re.findall(regex, self.corpus[doc_id].original_text)) + \
+                   len(re.findall(regex, self.corpus[doc_id].title)) + \
+                   len(re.findall(regex, self.corpus[doc_id].author))
+        else:
+            return 0
+
+
+
     ## Private Methods ##
-    def _compute_group_scores(self, query_terms, documents, phrase_search, scores):
+    def _compute_group_scores(self, query_terms, documents, phrase_search,
+                              scores):
         """
         Evaluate scores for specified query terms for all specified 
         documents and update the passed scores array. Return empty list
@@ -429,7 +485,7 @@ class QueryEngine():
 
                     # If phrase search and proximity is not 1, then return empty
                     if phrase_search and min_proximity[doc] != 1:
-                        non_phrase_docs.append(doc)                        
+                        non_phrase_docs.append(doc)              
                         
                 else:
                     # This is the first term iteration, we assume our snippet starts here
