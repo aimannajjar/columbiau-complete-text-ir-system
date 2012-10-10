@@ -72,7 +72,6 @@ class Indexer():
             import nltk.text
             self._full_text = ""            
         except Exception, e:
-            raise e
             logging.warning("You don't have nltk module installed. Similar queries will not be supported")
 
 
