@@ -204,6 +204,7 @@ class Indexer():
             if document is None:
                 logging.warning("INDEXER-P1-THREAD-%d: Document %s contains "
                                 "invalid format" % (thread_no,document_path))
+                queue.task_done()
                 continue
             logging.debug("INDEXER-P1-THREAD-%d: Processing '%s'" % 
                             (thread_no,document.title))
