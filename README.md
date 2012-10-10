@@ -11,38 +11,38 @@ Unpack archive and from the command line in a Linux machine run using Python 2.7
 
 To index a collection of documents, run:
 
-./index /path/to/collection-directory
+    ./index /path/to/collection-directory
 
 
 To start the interactive query console, run:
 
-./query
+    ./query
 
 A sample collection of documents is provided in the package in ./cranfieldDocs
 
 Query syntax: The following query example set cover all supported query types:
 
 
-  cat             - returns any document that has the word "cat" in it
-  cat dog         - any document that has one or more of these words
-               ("fuzzy or" is assumed by default)
-  cat dog rat     - up to 10 words in a query
-  "tabby cat"     - phrases of up to 5 words in length
-  "small tabby cat" "shaggy dog" : multiple phrases in a query
-  !cat
-  !"tabby cat"    - negations of single words or phrases
-  !cat !dog       - multiple negations per query
-  "similar cat"	: returns all the  words which are similar in context
-  df "pack rat"   - shows the number of documents in which "pack
-                    rat" appears in the index
-  df rat          - shows the number of documents in which rat
-                    appears in the index
-  freq "pack rat" - shows how many times the phrase "pack rat"
-                    appears in the index
-  doc 4562        - shows the full text of document 4562 (ideally
-                    through a pager)
-  tf 4562 rat     - shows the term frequency of rat in document 4562
-  title 4562      - show the title of document 4562
+    cat             - returns any document that has the word "cat" in it
+    cat dog         - any document that has one or more of these words
+                 ("fuzzy or" is assumed by default)
+    cat dog rat     - up to 10 words in a query
+    "tabby cat"     - phrases of up to 5 words in length
+    "small tabby cat" "shaggy dog" : multiple phrases in a query
+    !cat
+    !"tabby cat"    - negations of single words or phrases
+    !cat !dog       - multiple negations per query
+    "similar cat"	: returns all the  words which are similar in context
+    df "pack rat"   - shows the number of documents in which "pack
+                      rat" appears in the index
+    df rat          - shows the number of documents in which rat
+                      appears in the index
+    freq "pack rat" - shows how many times the phrase "pack rat"
+                      appears in the index
+    doc 4562        - shows the full text of document 4562 (ideally
+                      through a pager)
+    tf 4562 rat     - shows the term frequency of rat in document 4562
+    title 4562      - show the title of document 4562
 
 
 2. Documents Structure
