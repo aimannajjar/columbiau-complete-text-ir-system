@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Class Hierarchy</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th bgcolor="#70b0f0" class="navbar-select"
+          >&nbsp;&nbsp;&nbsp;Trees&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            >IR</th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">&nbsp;</td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="class-tree.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<center><b>
+ [ <a href="module-tree.html">Module Hierarchy</a>
+ | <a href="class-tree.html">Class Hierarchy</a> ]
+</b></center><br />
+<h1 class="epydoc">Class Hierarchy</h1>
+<ul class="nomargin-top">
+    <li> <strong class="uidlink">_abcoll.Container</strong>
+    <ul>
+    <li> <strong class="uidlink">_abcoll.Set</strong>:
+      <em class="summary">A set is a finite, iterable container.</em>
+    <ul>
+    <li> <strong class="uidlink">_abcoll.MutableSet</strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="IR.query_engine.OrderedSet.OrderedSet-class.html">IR.query_engine.OrderedSet.OrderedSet</a></strong>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="IR.indexer.indexer.Indexer-class.html">IR.indexer.indexer.Indexer</a></strong>:
+      <em class="summary">The Indexer class initializes multiple daemon threads to concurrently
+build an in-memory inverted file.</em>
+    </li>
+    <li> <strong class="uidlink">_abcoll.Iterable</strong>
+    <ul>
+    <li> <strong class="uidlink">_abcoll.Set</strong>:
+      <em class="summary">A set is a finite, iterable container.</em>
+    <ul>
+    <li> <strong class="uidlink">_abcoll.MutableSet</strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="IR.query_engine.OrderedSet.OrderedSet-class.html">IR.query_engine.OrderedSet.OrderedSet</a></strong>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink">markupbase.ParserBase</strong>:
+      <em class="summary">Parser base class which provides some common support methods used 
+        by the SGML/HTML and XHTML parsers.</em>
+    <ul>
+    <li> <strong class="uidlink">HTMLParser.HTMLParser</strong>:
+      <em class="summary">Find tags and other markup and call handler functions.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="IR.document.document.Document-class.html">IR.document.document.Document</a></strong>:
+      <em class="summary">Simple object that stores a document text and metadata, defines
+the following attributes per document:
+    document_id -- a numberical value that can be manually
+                    set by a client of this object
+    document_number -- the numerical value found in &lt;DOCNO&gt; tag
+    author, biblio, text -- document metadata and content
+    weighted_length -- total terms in document, terms from different
+                        zones contribute differently to this weighted 
+                        length (e.g.</em>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="IR.document.PorterStemmer.PorterStemmer-class.html">IR.document.PorterStemmer.PorterStemmer</a></strong>
+    </li>
+    <li> <strong class="uidlink"><a href="IR.query_engine.query.Query-class.html">IR.query_engine.query.Query</a></strong>:
+      <em class="summary">Example queries:
+cat             : returns any document that has the word
+                  &quot;cat&quot; in it
+cat dog         : any document that has one or more of 
+                  these words
+                 (&quot;fuzzy or&quot; is assumed by default)
+cat dog rat     : up to 10 words in a query
+&quot;tabby cat&quot;     : phrases of up to 5 words in length
+&quot;small tabby cat&quot; &quot;shaggy dog&quot; : multiple phrases in a 
+                                 query
+!cat !&quot;tabby cat&quot;: negations of single words or phrases
+!cat !dog       : multiple negations per query</em>
+    </li>
+    <li> <strong class="uidlink"><a href="IR.query_engine.engine.QueryEngine-class.html">IR.query_engine.engine.QueryEngine</a></strong>:
+      <em class="summary">The query engine loads the inverted file dictionary into memory 
+        however, it leaves the postings list on disk and only accesses them
+        when needed.</em>
+    </li>
+    <li> <strong class="uidlink">_abcoll.Sized</strong>
+    <ul>
+    <li> <strong class="uidlink">_abcoll.Set</strong>:
+      <em class="summary">A set is a finite, iterable container.</em>
+    <ul>
+    <li> <strong class="uidlink">_abcoll.MutableSet</strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="IR.query_engine.OrderedSet.OrderedSet-class.html">IR.query_engine.OrderedSet.OrderedSet</a></strong>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="IR.document.document.Zones-class.html">IR.document.document.Zones</a></strong>:
+      <em class="summary">Defines constants for index zones</em>
+    </li>
+</ul>
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+
+  <!-- Tree link -->
+      <th bgcolor="#70b0f0" class="navbar-select"
+          >&nbsp;&nbsp;&nbsp;Trees&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            >IR</th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1
+    on Wed Oct 10 16:08:59 2012
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>
