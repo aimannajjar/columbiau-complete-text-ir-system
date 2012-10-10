@@ -1,12 +1,8 @@
-##########################################
-# Search Engine Technology
-# Fall 2012
-#
-# A Complete Basic Information Retrieval System
-# Done by: 
-#		Aiman Najjar (an2434)
-#
-##########################################
+# Complete Basic IR System
+* COMS 6998-6 Search Engine Technology (Fall 2012)
+* Columbia University
+* Done by:
+  * Aiman Najjar (an2434)
 
 
 1 . Installation & Usage:
@@ -14,10 +10,13 @@
 Unpack archive and from the command line in a Linux machine run using Python 2.7.3+
 
 To index a collection of documents, run:
-$ ./index /path/to/collection-directory
+
+./index /path/to/collection-directory
+
 
 To start the interactive query console, run:
-$ ./query
+
+./query
 
 A sample collection of documents is provided in the package in ./cranfieldDocs
 
