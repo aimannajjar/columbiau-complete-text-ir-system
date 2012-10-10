@@ -48,7 +48,7 @@ class Indexer():
         self._pass2_queue = Queue.Queue()
         self._ifile_lock = threading.Lock()
         self._ifile_open = False
-        self._corpus = []
+        self._corpus = {}
         self._vector_space = []
         self.index_name = index_name
 
@@ -65,6 +65,15 @@ class Indexer():
             worker.setDaemon(True)
             worker.start()              
             logging.debug("INDEXER-P2-THREAD-%d: Thread started." % i)            
+
+        self._full_text = None
+        try:
+            import nltk
+            import nltk.text
+            self._full_text = ""            
+        except Exception, e:
+            logging.warning("You don't have nltk module installed. Similar queries will not be supported")
+
 
     def open(self):
         """
@@ -154,8 +163,8 @@ class Indexer():
         self._vector_space = [None] * (len(self._corpus) + 1)
 
         # Dispatch documents to second pass
-        for document in self._corpus:
-            self._pass2_queue.put(document)
+        for doc_id in self._corpus:
+            self._pass2_queue.put(self._corpus[doc_id])
 
         # Wait for vector space to be built
         self._pass2_queue.join()
@@ -170,10 +179,20 @@ class Indexer():
         f.write(zlib.compress(cPickle.dumps(self._corpus,cPickle.HIGHEST_PROTOCOL),9))
         f.close()
 
+        # Construct similar index
+        if self._full_text is not None:
+            import nltk
+            import nltk.text            
+            corpus_text = nltk.text.Text([word.lower() for word in nltk.word_tokenize(self._full_text)])
+
+            # Dump context index
+            f = open("%s.context" % self.index_name, "w")
+            f.write(zlib.compress(cPickle.dumps(corpus_text,cPickle.HIGHEST_PROTOCOL),9))
+            f.close()
 
     ## Private Methods ##
 
-    # Background threads loop, pass 2
+    # Background threads loop, pass 1
     def _pass1(self, thread_no, queue):
         while True:
             logging.debug("INDEXER-P1-THREAD-%d: Waiting for next document" %
@@ -192,7 +211,16 @@ class Indexer():
             # Assign an ID to the document
             with self._ifile_lock:
                 document.document_id = int(document.document_number)
-                self._corpus.append(document)
+                self._corpus[document.document_id] = document
+
+                # For similar context index
+                if (self._full_text is not None):
+                    cleaned_text = []
+                    for word in document.text.split(" "):
+                        if not word.lower() in constants.DO_NOT_INDEX:
+                            cleaned_text.append(word)
+                    self._full_text = self._full_text + " " + " ".join(cleaned_text)
+
 
             # Tokenize
             tokens = re.compile(constants.DELIMITERS).split(document.text)
@@ -221,7 +249,8 @@ class Indexer():
         # self._ifile[token] = [id, df, postings_list]
 
         # Let's make sure the token is not in our "do not index"
-        if token in constants.DO_NOT_INDEX:
+
+        if token in constants.DO_NOT_INDEX or len(token) <= 1:
             return
         p = PorterStemmer()
         # First, let's stem the token
@@ -266,40 +295,41 @@ class Indexer():
             for token in tokens:                
                 self._pass2_process_token(document, curr_pos, Zones.TEXT,
                                           token)
-                if token.lower() not in constants.DO_NOT_INDEX: 
-                    curr_pos = curr_pos + 1                
+                # if token.lower() not in constants.DO_NOT_INDEX and len(token) > 1:
+                curr_pos = curr_pos + 1                
 
             curr_pos = 1
             for token in tokens_title:                
                 self._pass2_process_token(document, curr_pos, Zones.TITLE, 
                                           token)                
-                if token.lower() not in constants.DO_NOT_INDEX: 
-                    curr_pos = curr_pos + 1                
+                # if token.lower() not in constants.DO_NOT_INDEX and len(token) > 1:
+                curr_pos = curr_pos + 1                
 
             curr_pos = 1
             for token in tokens_author:
                 self._pass2_process_token(document, curr_pos, Zones.AUTHOR,
                                           token)                                
-                if token.lower() not in constants.DO_NOT_INDEX: 
-                    curr_pos = curr_pos + 1                
+                # if token.lower() not in constants.DO_NOT_INDEX and len(token) > 1:
+                curr_pos = curr_pos + 1                
 
             curr_pos = 1
             for token in tokens_biblio:
                 self._pass2_process_token(document, curr_pos, Zones.BIBLIO,
                                           token)  
-                if token.lower() not in constants.DO_NOT_INDEX: 
-                    curr_pos = curr_pos + 1                
+                # if token.lower() not in constants.DO_NOT_INDEX and len(token) > 1:
+                curr_pos = curr_pos + 1                
 
             queue.task_done()
 
 
     def _pass2_process_token(self, document, position, zone, token):
         # Vector space structure
-        # self._vector_space[d][t][0] = frequency of term t in document d
-        # self._vector_space[d][t][1] = positions of term t in document d
+        # vector_space[d][t][0] = normalized frequency of term t in document d
+        # vector_space[d][t][1] = positions of term t in document d for each zone
+        # vector_space[d][t][2] = frequency of term t in document d
         # positions are in this format: ZoneNumber | position
         # Ensure token is in lowercase and eligible for index
-        if token in constants.DO_NOT_INDEX:
+        if token in constants.DO_NOT_INDEX or len(token) <= 1:
             return
 
         p = PorterStemmer()
@@ -312,12 +342,13 @@ class Indexer():
             return
         t = self._ifile[token][0]
         if not t in self._vector_space[document.document_id]:
-            self._vector_space[document.document_id][t] = [0.0, [[],[],[],[]]]
+            self._vector_space[document.document_id][t] = [0.0, [[],[],[],[]],0]
 
         self._vector_space[document.document_id][t][0] = \
             (Zones.WEIGHTS[zone] / document.length) \
             + self._vector_space[document.document_id][t][0]
 
         self._vector_space[document.document_id][t][1][zone].append(position)
+        self._vector_space[document.document_id][t][2] += 1
 
 

@@ -9,7 +9,8 @@ which is a class representation of the corpus.
 """
 import HTMLParser
 import logging
-import indexer.constants 
+import re
+import PorterStemmer
 
 class Zones:
     """Defines constants for index zones"""
@@ -110,7 +111,7 @@ class Document(HTMLParser.HTMLParser):
         return document
 
 
-    def __init__(self,):
+    def __init__(self):
         self.document_id = 0 
         self.document_number = None
         self.author = None
@@ -125,17 +126,43 @@ class Document(HTMLParser.HTMLParser):
         self.terms_list = []
         self.currentTag = ""
 
-    def text_snippet(self, start, length):
+    def colored_author(self, terms):
+        """Return the author field with highlighted terms """
+        author = self.author
+        for term in terms:
+            author = re.sub('(?i)' + re.escape(term),
+                           '\033[94m' + term + '\033[0m', author)
+
+        return author
+
+
+    def colored_title(self, terms):
+        """Return the title with highlighted terms """
+        title = self.title
+        for term in terms:
+            title = re.sub('(?i)([\s.,=?!:@<>()\"-;\'&_\\{\\}\\|\\[\\]\\\\]' + \
+                            re.escape(term) + \
+                           "[^\s.,=?!:@<>()\"-;\'&_\\{\\}\\|\\[\\]\\\\]*)",
+                             '\033[94m\\1\033[0m', title) 
+
+        return title
+
+    def text_snippet(self, terms, start, length):
         """
-        Returns a snippet from pos start to end without counting skip words
+        Return a snippet from pos start to end with highlighted terms
+            start - the "word" position (as opposed to characater position)
+            length - how many words to include
+
+
         """
+
         start_found = False
         new_start = 0
         new_end = 0
         pos = start
+
         for term in self.text.split(" "):
-            if term not in indexer.constants.DO_NOT_INDEX:
-                pos = pos - 1
+            pos = pos - 1
 
             if not start_found:
                 new_start = new_start + 1
@@ -148,7 +175,17 @@ class Document(HTMLParser.HTMLParser):
             elif pos <= 0:
                 break
         new_end = new_start + new_end
-        return " ".join(self.text.split(" ")[new_start:new_end]) 
+        snippet = " ".join(self.text.split(" ")[new_start:new_end])
+
+        for term in terms:
+            p = PorterStemmer.PorterStemmer()
+            term = p.stem(term, 0,len(term)-1)
+            snippet = re.sub('(?i)([\s.,=?!:@<>()\"-;\'&_\\{\\}\\|\\[\\]\\\\]' + \
+                             re.escape(term) + \
+                             "[^\s.,=?!:@<>()\"-;\'&_\\{\\}\\|\\[\\]\\\\]*)",
+                             '\033[94m\\1\033[0m', snippet) 
+
+        return snippet
 
     def handle_starttag(self, tag, attrs):
         self.currentTag = tag

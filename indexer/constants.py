@@ -1,5 +1,5 @@
 DELIMITERS = '[\s.,=?!:@<>()\"-;\'&_\\{\\}\\|\\[\\]\\\\]+'    
-DO_NOT_INDEX    = { "about" : True,
+DO_NOT_INDEX    = { "a" : True, "about" : True,
 "above" : True,
 "after" : True,
 "again" : True,
