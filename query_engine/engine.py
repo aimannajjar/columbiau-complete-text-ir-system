@@ -349,6 +349,10 @@ class QueryEngine():
 
     def similar_words(self, word,n=5):
         """Find all terms similar in context to the specified word"""
+        if not self.context:
+            logging.warning("You don't have nltk module installed. " \
+                            "Similar queries will not be supported")
+            return []            
 
         # This mirrors the method implemented in nltk module with 
         # the exception that it does not print out any output but instead
