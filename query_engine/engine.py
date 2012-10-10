@@ -39,22 +39,41 @@ class QueryEngine():
         # Load Indexes into memory
         # ----------------------------------
         # Read inverted file
-        f = open("%s.dict" % index_name, "r")
-        zstr = f.read()
-        f.close()
-        self._ifile = cPickle.loads(zlib.decompress(zstr))
+        try:
+            f = open("%s.dict" % index_name, "r")
+            zstr = f.read()
+            f.close()
+            self._ifile = cPickle.loads(zlib.decompress(zstr))            
+        except Exception, e:
+            logging.error("Failed to load index file %s.dict. " \
+                          "Please run ./index first" % index_name)
+            raise e
+
 
         # Read vector space
-        f = open("%s.vs" % index_name, "r")
-        zstr = f.read()
-        f.close()
-        self._vector_space = cPickle.loads(zlib.decompress(zstr))
+        try:
+            f = open("%s.vs" % index_name, "r")
+            zstr = f.read()
+            f.close()
+            self._vector_space = cPickle.loads(zlib.decompress(zstr))            
+        except Exception, e:
+            logging.error("Failed to load index file %s.vs. " \
+              "Please run ./index first" % index_name)
+            raise e
+
+
 
         # Read corpus collection
-        f = open("%s.corpus" % index_name, "r")
-        zstr = f.read()
-        f.close()
-        self.corpus = cPickle.loads(zlib.decompress(zstr))        
+        try:
+            f = open("%s.corpus" % index_name, "r")
+            zstr = f.read()
+            f.close()
+            self.corpus = cPickle.loads(zlib.decompress(zstr))                    
+        except Exception, e:
+            logging.error("Failed to load index file %s.corpus. " \
+              "Please run ./index first" % index_name)
+            raise e
+
 
         # Read similar context index into memory (for "similar" queries)
         # This requires nltk module present in the system, we do a check 

@@ -33,7 +33,15 @@ if __name__ == "__main__":
 
     
     logging.info("Loading index file")
-    qe = QueryEngine(MAX_RESULTS)
+    qe = None
+    try:
+        qe = QueryEngine(MAX_RESULTS)
+    except Exception, e:
+        print ''
+        print "Could not initalize query engine"
+        print ''
+        sys.exit(-1)
+
     
     print ''
     print '------------------------------------------' 
