@@ -32,6 +32,7 @@ class QueryEngine():
 
         self._ifile = None
         self._vector_space = None
+        self.context = None
         self.max_results = max_results
 
         # ----------------------------------
