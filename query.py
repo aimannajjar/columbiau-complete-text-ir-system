@@ -15,6 +15,7 @@ script. Index files must reside in the same Current Working Directory
 import sys
 import os
 import logging
+import datetime
 from query_engine.engine import QueryEngine
 from query_engine.query import Query
 
@@ -51,7 +52,11 @@ if __name__ == "__main__":
         sys.stdout.write('Query: ')
         value = raw_input()
         query_obj = Query.from_string(value)
+
+        a = datetime.datetime.now()
         results = qe.query(query_obj)
+        b = datetime.datetime.now()
+
         i = 0
 
         
@@ -119,7 +124,7 @@ if __name__ == "__main__":
                 i = i + 1
 
         print ''
-        print ' (End of Results)  '
+        print 'Query executed in %0.4f seconds' % ( ( (b-a).microseconds / 1000.0) / 1000.0 )
         print '------------------------------------------'
         print ''
 

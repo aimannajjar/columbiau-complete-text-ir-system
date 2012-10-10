@@ -43,10 +43,11 @@ warning message will be issued to stderr
 import sys
 import os
 import logging
+import datetime
 from indexer.indexer import Indexer
 
 # Constants
-NUM_INDEXER_THREADS = 2
+NUM_INDEXER_THREADS = 2 # per pass
 
 
 # Prints Usage
@@ -65,6 +66,7 @@ if __name__ == "__main__":
     indexer = Indexer(NUM_INDEXER_THREADS)
     indexer.open()
 
+    a = datetime.datetime.now()
     logging.info("Starting pass 1")
     for filename in os.listdir(args[1]):
         indexer.index_document(os.path.join(args[1], filename))
@@ -74,5 +76,9 @@ if __name__ == "__main__":
     logging.info("Starting pass 2")
     indexer.build_index()
     logging.info("Pass 2 done")
+    b = datetime.datetime.now()
 
+
+    print 'Index built in %d seconds using %d threads per pass' % \
+                ((b-a).seconds, NUM_INDEXER_THREADS)
 
