@@ -151,7 +151,6 @@ class Query():
                     query_terms.append(term)
             queryObj.groups.append(' '.join(query_terms))
 
-
         return queryObj
 
 

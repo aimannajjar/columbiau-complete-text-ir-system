@@ -292,7 +292,7 @@ class QueryEngine():
         if query.cmd == "freq":
             total_freq = 0
             for doc in sorted(final_scores, key=lambda d: final_scores[d], reverse=True):
-                total_freq += self.phrase_frequency_in_doc(doc, query.groups[0])
+                total_freq += self.phrase_frequency_in_doc(doc, " ".join(query.raw_terms))
             return total_freq
 
         # - If this is a "tf" query for a phrase,
@@ -307,9 +307,9 @@ class QueryEngine():
             except Exception, e:
                 return 0
 
-            return self.phrase_frequency_in_doc(doc_id, query.groups[0])        
+            return self.phrase_frequency_in_doc(doc_id, " ".join(query.raw_terms[1:]))        
 
-        if len(final_set) <= 0:
+        if not exclude_set and len(final_set) <= 0:
             return []
 
 
