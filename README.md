@@ -101,12 +101,12 @@ Upon a successful completion of an indexing run, the following files will be sav
 * INDEX_NAME.context: This is used by NTLK to perform "similar" queries
 
 
-6. API Documentation
+5. API Documentation
 ---------------------------------------
 The API is documented using Python docstrings, I've attempted to adhere as much as possible to PEP-257 conventions. The documentation can be viewed offline at docs/index.html or using pydoc tool.
 
 
-7. Additional Features
+6. Additional Features
 ---------------------------------------
 The main weighing scheme I used to determine documents ranking is TF-IDF, however, in addition to the standard TF-IDF the following factors greatly contribute to documents ranking:
 * Proximity based ranking: Documents in which terms occur within smaller proximity windows are given higher scores
@@ -119,7 +119,7 @@ Also other additional features include:
 * A vector-space representation is constructed during indexing although not directly exposed via API.
 * The interactive query script highlight returned result set
 
-8. Further Work
+7. Further Work
 ---------------------------------------
 I have attempted to implement many ideas in the IR literature to improve ranking and scoring as well as for faster query time processing, however, I believe there is room for optimization in the indexer to improve index compression and reduce the index size. Currently, I'm compressing the index size on disk using ZLIB, I've implemented one compression technique for the postings lists which is encodig the list using D-Gap method, I still believe more can be done in that area in particular. 
 
