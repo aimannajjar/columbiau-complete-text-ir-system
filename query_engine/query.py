@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# file: indexer/document.py
+# file: indexer/query.py
 # author: Aiman Najjar (an2434), Columbia University
 
 """
