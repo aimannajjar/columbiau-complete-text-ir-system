@@ -258,6 +258,7 @@ class QueryEngine():
         # The results set is a map where keys are the document id and
         # values are [doc_id, document_score, snippet_position_start]
         total_positive_scores = 0
+        i = 0
         exclude_set = False # If we have negative socres (i.e. when 
                             # processing negated queries), the result
                             # set can be treated as an "exclusion" set
@@ -275,9 +276,10 @@ class QueryEngine():
 
             if final_scores[doc] >= 0.0:
                 total_positive_scores = total_positive_scores + 1
+
+            if i == 0 and final_scores[doc] < 0:
+                exclude_set = True
         
-        if total_positive_scores <= 0:
-            exclude_set = True    
 
         # Special Cases
         # - If this is a "df" query for a phrase,
