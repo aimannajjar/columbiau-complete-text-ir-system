@@ -1,4 +1,7 @@
 # Complete Basic IR System
+
+![screenshot example of search engine] (https://s3.amazonaws.com/aimannajjar.com/assets/images/portfolio/search_engine.png)
+
 * COMS 6998-6 Search Engine Technology (Fall 2012)
 * Columbia University
 * Done by:
