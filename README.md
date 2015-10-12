@@ -11,7 +11,7 @@ Unpack archive and from the command line in a Linux machine run using Python 2.7
 
 To index a collection of documents, run:
 
-    ./index /path/to/collection-directory
+    ./index ./cranfieldDocs
 
 
 To start the interactive query console, run:
